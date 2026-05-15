@@ -1,16 +1,21 @@
-# URL Normalization Strategy
+# URL Handling Utility
 
-## Issue
-Invalid URLs are handled inconsistently across the business layer, leading to redundant validation and potential canonicalization mismatches.
+Stateless normalization pipeline for URLs used at the API ingress layer.
 
-## Technical Strategy
-Enforce URL normalization at the boundary (ingress point) using a stateless utility function. This prevents the propagation of non-canonical strings into the core business logic.
+## Pipeline Logic
+1. Sanitization: Trims whitespace.
+2. Scheme Injection: Defaults to `https://` if no scheme is present.
+3. Validation: Verifies `netloc` and `scheme` via `urllib.parse`.
+4. Normalization: Lowercases the domain.
 
-## Implementation
-- Implement a stateless `normalize_url` utility using `urllib.parse`.
-- Apply normalization in API controllers or Request DTOs.
-- Ensure idempotency and RFC 3986 compliance.
-- Reject the stateful `URLProcessor` approach from PR #15 to avoid unnecessary abstraction layers.
+## Usage
+```python
+from utils.url_handler import normalize_url
+from exceptions import URLValidationError
 
-## Enforcement
-URLs must be canonical before reaching the business layer. This removes the need for repetitive strict validation in downstream services.
+try:
+    clean_url = normalize_url("EXAMPLE.COM")
+except URLValidationError as e:
+    # Handle API error response
+    pass
+```
